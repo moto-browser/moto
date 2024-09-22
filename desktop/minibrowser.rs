@@ -525,7 +525,7 @@ impl Minibrowser {
                 },
                 MinibrowserEvent::NewWebView => {
                     self.location_dirty.set(false);
-                    let url = ServoUrl::parse("servo:newtab").unwrap();
+                    let url = ServoUrl::parse("moto:newtab").unwrap();
                     app_event_queue.push(EmbedderEvent::NewWebView(url, WebViewId::new()));
                 },
             }

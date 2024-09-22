@@ -489,7 +489,7 @@ where
                 self.focused_webview_id.map(EmbedderEvent::CloseWebView)
             })
             .shortcut(CMD_OR_CONTROL, 'T', || {
-                let url = ServoUrl::parse("servo:newtab").unwrap();
+                let url = ServoUrl::parse("moto:newtab").unwrap();
                 Some(EmbedderEvent::NewWebView(url, WebViewId::new()))
             })
             .shortcut(CMD_OR_CONTROL, 'Q', || Some(EmbedderEvent::Quit))

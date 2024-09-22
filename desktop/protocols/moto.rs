@@ -4,7 +4,7 @@
 
 //! Loads resources using a mapping from well-known shortcuts to resource: urls.
 //! Recognized shorcuts:
-//! - servo:newtab
+//! - about:newtab
 
 use std::future::Future;
 use std::pin::Pin;
@@ -17,9 +17,9 @@ use servo::net_traits::response::Response;
 use crate::desktop::protocols::resource::ResourceProtocolHander;
 
 #[derive(Default)]
-pub struct ServoProtocolHander {}
+pub struct MotoProtocolHander {}
 
-impl ProtocolHandler for ServoProtocolHander {
+impl ProtocolHandler for MotoProtocolHander {
     fn load(
         &self,
         request: &mut Request,
