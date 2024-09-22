@@ -298,6 +298,10 @@ impl Minibrowser {
                                 }
                                 ui.close_menu();
                             }
+                            ui.separator();
+                            if ui.button("Exit").clicked() {
+                                std::process::exit(0);
+                            }
                         });
                         ui.menu_button("Help", |ui| {
                             if ui.button("About Moto").clicked() {
