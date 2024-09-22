@@ -4,7 +4,7 @@
 
 //! Loads resources using a mapping from well-known shortcuts to resource: urls.
 //! Recognized shorcuts:
-//! - about:newtab
+//! - moto:newtab
 
 use std::future::Future;
 use std::pin::Pin;
