@@ -10,8 +10,8 @@ use std::time::Instant;
 use egui::text::{CCursor, CCursorRange};
 use egui::text_edit::TextEditState;
 use egui::{
-    pos2, CentralPanel, Frame, Key, Label, Modifiers, PaintCallback, Pos2, SelectableLabel,
-    TopBottomPanel, Vec2, menu,
+    menu, pos2, CentralPanel, Frame, Key, Label, Modifiers, PaintCallback, Pos2, SelectableLabel,
+    TopBottomPanel, Vec2,
 };
 use egui_glow::CallbackFn;
 use egui_winit::EventResponse;
@@ -56,6 +56,8 @@ pub struct Minibrowser {
     load_status: LoadStatus,
 
     status_text: Option<String>,
+
+    show_about_window: Cell<bool>,
 }
 
 pub enum MinibrowserEvent {
@@ -106,6 +108,7 @@ impl Minibrowser {
             location_dirty: false.into(),
             load_status: LoadStatus::LoadComplete,
             status_text: None,
+            show_about_window: false.into(),
         }
     }
 
@@ -146,8 +149,8 @@ impl Minibrowser {
                 self.event_queue.borrow_mut().push(MinibrowserEvent::Back);
                 true
             },
-            winit::event::WindowEvent::MouseWheel { .. } |
-            winit::event::WindowEvent::MouseInput { .. } => self
+            winit::event::WindowEvent::MouseWheel { .. }
+            | winit::event::WindowEvent::MouseInput { .. } => self
                 .last_mouse_position
                 .map_or(false, |p| self.is_in_browser_rect(p)),
             _ => true,
@@ -292,8 +295,14 @@ impl Minibrowser {
                                     file_url.push_str(&path);
                                     *location.borrow_mut() = file_url;
                                     event_queue.borrow_mut().push(MinibrowserEvent::Go);
-                                    ui.close_menu();
                                 }
+                                ui.close_menu();
+                            }
+                        });
+                        ui.menu_button("Help", |ui| {
+                            if ui.button("About Moto").clicked() {
+                                self.show_about_window.set(true);
+                                ui.close_menu();
                             }
                         });
                     });
@@ -351,8 +360,8 @@ impl Minibrowser {
                                             state.store(ui.ctx(), location_id);
                                         }
                                     }
-                                    if location_field.lost_focus() &&
-                                        ui.input(|i| i.clone().key_pressed(Key::Enter))
+                                    if location_field.lost_focus()
+                                        && ui.input(|i| i.clone().key_pressed(Key::Enter))
                                     {
                                         event_queue.borrow_mut().push(MinibrowserEvent::Go);
                                         location_dirty.set(false);
@@ -362,6 +371,27 @@ impl Minibrowser {
                         },
                     );
                 });
+
+                // About Window
+                if self.show_about_window.get() {
+                    let size = window.inner_size();
+                    egui::Window::new("About")
+                        .min_size((256.0, 256.0))
+                        .collapsible(false)
+                        .pivot(egui::Align2::CENTER_CENTER)
+                        .default_pos((size.width as f32 / 2.0, size.height as f32 / 2.0))
+                        .title_bar(true)
+                        .show(ctx, |ui| {
+                            ui.vertical_centered(|ui| {
+                                let text = egui::RichText::new(crate::moto_version()).size(16.0);
+                                ui.label(text);
+                                ui.add_space(8.0);
+                                if ui.button("Close").clicked() {
+                                    self.show_about_window.set(false);
+                                }
+                            });
+                        });
+                }
             };
 
             let mut embedder_events = vec![];
@@ -414,10 +444,9 @@ impl Minibrowser {
                         x: width,
                         y: height,
                     } = ui.available_size();
-                    let rect = Box2D::from_origin_and_size(
-                        Point2D::new(x, y),
-                        Size2D::new(width, height),
-                    ) * scale;
+                    let rect =
+                        Box2D::from_origin_and_size(Point2D::new(x, y), Size2D::new(width, height))
+                            * scale;
                     if rect != webview.rect {
                         webview.rect = rect;
                         embedder_events
@@ -597,8 +626,8 @@ impl Minibrowser {
         //       because logical OR would short-circuit if any of the functions return true.
         //       We want to ensure that all functions are called. The "bitwise OR" operator
         //       does not short-circuit.
-        self.update_location_in_toolbar(browser) |
-            self.update_spinner_in_toolbar(browser) |
-            self.update_status_text(browser)
+        self.update_location_in_toolbar(browser)
+            | self.update_spinner_in_toolbar(browser)
+            | self.update_status_text(browser)
     }
 }
