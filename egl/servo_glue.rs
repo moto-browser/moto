@@ -613,19 +613,19 @@ impl ServoGlue {
                 EmbedderMsg::ReadyToPresent(_webview_ids) => {
                     need_present = true;
                 },
-                EmbedderMsg::Status(..) |
-                EmbedderMsg::SelectFiles(..) |
-                EmbedderMsg::MoveTo(..) |
-                EmbedderMsg::ResizeTo(..) |
-                EmbedderMsg::Keyboard(..) |
-                EmbedderMsg::SetCursor(..) |
-                EmbedderMsg::NewFavicon(..) |
-                EmbedderMsg::HeadParsed |
-                EmbedderMsg::SetFullscreenState(..) |
-                EmbedderMsg::ReportProfile(..) |
-                EmbedderMsg::EventDelivered(..) |
-                EmbedderMsg::PlayGamepadHapticEffect(..) |
-                EmbedderMsg::StopGamepadHapticEffect(..) => {},
+                EmbedderMsg::Status(..)
+                | EmbedderMsg::SelectFiles(..)
+                | EmbedderMsg::MoveTo(..)
+                | EmbedderMsg::ResizeTo(..)
+                | EmbedderMsg::Keyboard(..)
+                | EmbedderMsg::SetCursor(..)
+                | EmbedderMsg::NewFavicon(..)
+                | EmbedderMsg::HeadParsed
+                | EmbedderMsg::SetFullscreenState(..)
+                | EmbedderMsg::ReportProfile(..)
+                | EmbedderMsg::EventDelivered(..)
+                | EmbedderMsg::PlayGamepadHapticEffect(..)
+                | EmbedderMsg::StopGamepadHapticEffect(..) => {},
             }
         }
 

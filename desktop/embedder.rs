@@ -4,15 +4,15 @@
 
 //! Implements the global methods required by Servo (not window/gl/compositor related).
 
-use servo::net::protocols::ProtocolRegistry;
 use servo::compositing::windowing::EmbedderMethods;
 use servo::embedder_traits::{EmbedderProxy, EventLoopWaker};
+use servo::net::protocols::ProtocolRegistry;
 use servo::servo_config::pref;
 use webxr::glwindow::GlWindowDiscovery;
 #[cfg(target_os = "windows")]
 use webxr::openxr::OpenXrDiscovery;
 
-use crate::desktop::protocols::{resource, moto, urlinfo};
+use crate::desktop::protocols::{moto, resource, urlinfo};
 
 pub enum XrDiscovery {
     GlWindow(GlWindowDiscovery),
@@ -67,6 +67,6 @@ impl EmbedderMethods for EmbedderCallbacks {
     }
 
     fn get_version_string(&self) -> Option<String> {
-        crate::servo_version().into()
+        crate::moto_version().into()
     }
 }

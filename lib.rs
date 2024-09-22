@@ -52,9 +52,9 @@ pub fn main() {
     println!("You shouldn't start /ports/servoshell/ on OpenHarmony.");
 }
 
-pub fn servo_version() -> String {
+pub fn moto_version() -> String {
     format!(
-        "Servo {}-{}",
+        "Moto {}-{}",
         env!("CARGO_PKG_VERSION"),
         env!("VERGEN_GIT_SHA")
     )

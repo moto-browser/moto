@@ -77,7 +77,7 @@ pub fn main() {
     }
 
     if opts::get().is_printing_version {
-        println!("{}", crate::servo_version());
+        println!("{}", crate::moto_version());
         process::exit(0);
     }
 
