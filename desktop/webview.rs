@@ -66,6 +66,7 @@ pub struct WebViewManager<Window: WindowPortsMethods + ?Sized> {
     gamepad: Option<Gilrs>,
     haptic_effects: HashMap<usize, HapticEffect>,
     shutdown_requested: bool,
+    history: Vec<ServoUrl>,
 }
 
 #[derive(Clone, Default)]
@@ -143,6 +144,7 @@ where
 
             event_queue: Vec::new(),
             shutdown_requested: false,
+            history: vec![],
         }
     }
 
@@ -198,6 +200,16 @@ where
             res.push((*id, self.webviews.get(id).unwrap()))
         }
         res
+    }
+
+    /// List the most recent history entries
+    pub fn history(&self) -> Vec<ServoUrl> {
+        self.history
+            .iter()
+            .rev()
+            .take(20) // TODO: Make this number configurable
+            .map(|u| u.clone())
+            .collect::<Vec<ServoUrl>>()
     }
 
     pub fn handle_window_events(&mut self, events: Vec<EmbedderEvent>) {
@@ -897,12 +909,17 @@ where
                 },
                 EmbedderMsg::HistoryChanged(urls, current) => {
                     if let Some(webview_id) = webview_id {
+                        let mut new_history: Option<ServoUrl> = None;
                         if let Some(webview) = self.get_mut(webview_id) {
+                            new_history = Some(urls[current].clone());
                             webview.url = Some(urls[current].clone());
                             need_update = true;
                         } else {
                             let data = self.ensure_preload_data_mut(&webview_id);
                             data.url = Some(urls[current].clone());
+                        }
+                        if let Some(history) = new_history {
+                            self.history.push(history);
                         }
                     }
                 },

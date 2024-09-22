@@ -303,6 +303,20 @@ impl Minibrowser {
                                 std::process::exit(0);
                             }
                         });
+                        ui.menu_button("Bookmarks", |ui| {
+                            // TODO: Determine persistent storage mechanism
+                        });
+                        ui.menu_button("History", |ui| {
+                            let history = webviews.history();
+                            for url in history {
+                                // TODO: Prevent Servo from receiving cursor events while hovering these
+                                if ui.button(url.as_str()).clicked() {
+                                    *location.borrow_mut() = url.to_string();
+                                    event_queue.borrow_mut().push(MinibrowserEvent::Go);
+                                    ui.close_menu();
+                                }
+                            }
+                        });
                         ui.menu_button("Help", |ui| {
                             if ui.button("About Moto").clicked() {
                                 self.show_about_window.set(true);
