@@ -208,7 +208,7 @@ where
             .iter()
             .rev()
             .take(20) // TODO: Make this number configurable
-            .map(|u| u.clone())
+            .cloned()
             .collect::<Vec<ServoUrl>>()
     }
 
