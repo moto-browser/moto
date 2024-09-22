@@ -11,7 +11,7 @@ use egui::text::{CCursor, CCursorRange};
 use egui::text_edit::TextEditState;
 use egui::{
     pos2, CentralPanel, Frame, Key, Label, Modifiers, PaintCallback, Pos2, SelectableLabel,
-    TopBottomPanel, Vec2,
+    TopBottomPanel, Vec2, menu,
 };
 use egui_glow::CallbackFn;
 use egui_winit::EventResponse;
@@ -27,6 +27,7 @@ use servo::servo_url::ServoUrl;
 use servo::style_traits::DevicePixel;
 use servo::webrender_traits::RenderingContext;
 use servo::TopLevelBrowsingContextId;
+use tinyfiledialogs::open_file_dialog;
 use winit::event::{ElementState, MouseButton};
 
 use super::egui_glue::EguiGlow;
@@ -282,6 +283,20 @@ impl Minibrowser {
                     .fill(ctx.style().visuals.window_fill)
                     .inner_margin(4.0);
                 TopBottomPanel::top("toolbar").frame(frame).show(ctx, |ui| {
+                    menu::bar(ui, |ui| {
+                        ui.menu_button("File", |ui| {
+                            if ui.button("Open File").clicked() {
+                                let mut file_url = String::from("file:///");
+                                let file_path = open_file_dialog("File Picker", "C:/", None);
+                                if let Some(path) = file_path {
+                                    file_url.push_str(&path);
+                                    *location.borrow_mut() = file_url;
+                                    event_queue.borrow_mut().push(MinibrowserEvent::Go);
+                                    ui.close_menu();
+                                }
+                            }
+                        });
+                    });
                     ui.allocate_ui_with_layout(
                         ui.available_size(),
                         egui::Layout::left_to_right(egui::Align::Center),
