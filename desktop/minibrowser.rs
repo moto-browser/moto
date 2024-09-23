@@ -3,10 +3,13 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 use std::cell::{Cell, RefCell};
+use std::fs;
 use std::num::NonZeroU32;
+use std::path::Path;
 use std::sync::Arc;
 use std::time::Instant;
 
+use directories::ProjectDirs;
 use egui::text::{CCursor, CCursorRange};
 use egui::text_edit::TextEditState;
 use egui::{
@@ -30,6 +33,7 @@ use servo::TopLevelBrowsingContextId;
 use tinyfiledialogs::open_file_dialog;
 use winit::event::{ElementState, MouseButton};
 
+use super::db::{add_bookmark, create_bookmarks_db, get_bookmarks, remove_bookmark};
 use super::egui_glue::EguiGlow;
 use super::events_loop::EventsLoop;
 use super::geometry::winit_position_to_euclid_point;
@@ -58,6 +62,10 @@ pub struct Minibrowser {
     status_text: Option<String>,
 
     show_about_window: Cell<bool>,
+
+    config_dir: String,
+
+    bookmarks: RefCell<Vec<Bookmark>>,
 }
 
 pub enum MinibrowserEvent {
@@ -76,6 +84,11 @@ fn truncate_with_ellipsis(input: &str, max_length: usize) -> String {
     } else {
         input.to_string()
     }
+}
+
+pub struct Bookmark {
+    pub url: String,
+    pub title: String,
 }
 
 impl Minibrowser {
@@ -97,6 +110,33 @@ impl Minibrowser {
             Err(error) => panic!("Failed to get widget surface info from surfman! {error:?}"),
         };
 
+        let config_dir = if let Some(proj_dirs) = ProjectDirs::from("org", "Moto Browser", "Moto") {
+            String::from(proj_dirs.config_dir().to_str().unwrap_or(""))
+            // Linux:   /home/alice/.config/barapp
+            // Windows: C:\Users\Alice\AppData\Roaming\Foo Corp\Bar App
+            // macOS:   /Users/Alice/Library/Application Support/com.Foo-Corp.Bar-App
+        } else {
+            // TODO: Handle this case somehow
+            String::from("")
+        };
+
+        if !config_dir.is_empty() {
+            // Set up user config things (bookmarks)
+
+            // Check if config dir exists
+            let path = Path::new(&config_dir);
+            if !path.exists() {
+                fs::create_dir_all(path).unwrap();
+            }
+            // Check if bookmarks.sqlite exists, if not then create it
+            let path = Path::new(&config_dir).join("bookmarks.sqlite");
+            if !path.exists() {
+                create_bookmarks_db(config_dir.as_str()).expect("Failed to create bookmarks DB!");
+            }
+        }
+
+        let bookmarks = get_bookmarks(&config_dir);
+
         Self {
             context,
             event_queue: RefCell::new(vec![]),
@@ -109,6 +149,8 @@ impl Minibrowser {
             load_status: LoadStatus::LoadComplete,
             status_text: None,
             show_about_window: false.into(),
+            config_dir,
+            bookmarks: RefCell::new(bookmarks),
         }
     }
 
@@ -304,7 +346,14 @@ impl Minibrowser {
                             }
                         });
                         ui.menu_button("Bookmarks", |ui| {
-                            // TODO: Determine persistent storage mechanism
+                            let bookmarks = self.bookmarks.borrow();
+                            for bookmark in bookmarks.as_slice() {
+                                if ui.button(&bookmark.title).clicked() {
+                                    *location.borrow_mut() = bookmark.url.clone();
+                                    event_queue.borrow_mut().push(MinibrowserEvent::Go);
+                                    ui.close_menu();
+                                }
+                            }
                         });
                         ui.menu_button("History", |ui| {
                             let history = webviews.history();
@@ -353,6 +402,35 @@ impl Minibrowser {
                                 ui.available_size(),
                                 egui::Layout::right_to_left(egui::Align::Center),
                                 |ui| {
+                                    let has_bookmark = self
+                                        .bookmarks
+                                        .borrow()
+                                        .iter()
+                                        .any(|b| b.url == *location.borrow());
+                                    let star = if has_bookmark { "★" } else { "☆" };
+                                    if ui.add(Minibrowser::toolbar_button(star)).clicked() {
+                                        let Some(webview) = webviews.focused_webview() else {
+                                            return;
+                                        };
+                                        let url = webview.url.clone().unwrap().to_string();
+                                        let title = webview.title.clone().unwrap_or("".into());
+                                        if !has_bookmark {
+                                            // Add bookmark to DB
+                                            if add_bookmark(&self.config_dir, &url, &title).is_ok()
+                                            {
+                                                self.bookmarks
+                                                    .borrow_mut()
+                                                    .push(Bookmark { url, title });
+                                            }
+                                        } else {
+                                            // Remove bookmark from DB
+                                            if remove_bookmark(&self.config_dir, &url).is_ok() {
+                                                self.bookmarks
+                                                    .borrow_mut()
+                                                    .retain(|b| b.url != url);
+                                            }
+                                        }
+                                    }
                                     let location_id = egui::Id::new("location_input");
                                     let location_field = ui.add_sized(
                                         ui.available_size(),
