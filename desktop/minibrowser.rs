@@ -479,6 +479,9 @@ impl Minibrowser {
                         .title_bar(true)
                         .show(ctx, |ui| {
                             ui.vertical_centered(|ui| {
+                                ui.add(
+                                    egui::Image::new(egui::include_image!("../resources/moto_1024.png"))
+                                );
                                 let text = egui::RichText::new(crate::moto_version()).size(16.0);
                                 ui.label(text);
                                 ui.add_space(8.0);

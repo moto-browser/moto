@@ -91,6 +91,7 @@ ohos-sys = { version = "0.2.1", features = ["xcomponent"] }
 servo_allocator = { git = "https://github.com/servo/servo.git", rev = "f986160" }
 arboard = { version = "3" }
 egui = { version = "0.28.1" }
+egui_extras = { version = "0.28.1", features = ["all_loaders"] }
 egui_glow = { version = "0.28.1", features = ["winit"] }
 egui-winit = { version = "0.28.1", default-features = false, features = ["clipboard", "wayland"] }
 euclid = "0.22"

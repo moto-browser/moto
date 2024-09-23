@@ -63,6 +63,7 @@ impl EguiGlow {
             .unwrap();
 
         let egui_ctx = egui::Context::default();
+        egui_extras::install_image_loaders(&egui_ctx);
         Self {
             egui_winit: egui_winit::State::new(
                 egui_ctx.clone(),
