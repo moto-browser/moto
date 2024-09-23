@@ -10,7 +10,7 @@ Moto is an experimental browser based on the Servo browser engine.
 
 ## Short-Term Goals
 
-Experimenting with implementing features to see what a more developed, user-focused browser for Servo could look like. These inclulde things like:
+Experimenting with implementing features to see what a more developed, user-focused browser for Servo could look like. These include things like:
 
 - Favorites/Bookmarks
 - History
