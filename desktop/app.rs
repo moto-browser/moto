@@ -144,7 +144,7 @@ impl App {
                 let openxr_discovery = if pref!(dom.webxr.openxr.enabled) && !opts::get().headless {
                     #[cfg(target_os = "windows")]
                     let openxr = {
-                        let app_info = AppInfo::new("Servoshell", 0, "Servo", 0);
+                        let app_info = AppInfo::new("Moto", 0, "Servo", 0);
                         Some(XrDiscovery::OpenXr(OpenXrDiscovery::new(None, app_info)))
                     };
                     #[cfg(not(target_os = "windows"))]
@@ -224,7 +224,7 @@ impl App {
                 trace!("RedrawRequested");
 
                 // WARNING: do not defer painting or presenting to some later tick of the event
-                // loop or servoshell may become unresponsive! (servo#30312)
+                // loop or Moto may become unresponsive! (servo#30312)
                 if let Some(mut minibrowser) = app.minibrowser() {
                     minibrowser.update(
                         window.winit_window().unwrap(),

@@ -5,7 +5,7 @@
 //! This protocol handler loads files from the <resources_dir_path()>/protocol/resource directory,
 //! sanitizing the path to prevent path escape attacks.
 //! For security reasons, loads are only allowed if the referrer has a 'resource' or
-//! 'servo' scheme.
+//! 'moto' scheme.
 
 use std::fs::File;
 use std::future::Future;

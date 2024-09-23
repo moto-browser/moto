@@ -689,7 +689,7 @@ where
                             webview.title = title.clone();
                             if webview.focused {
                                 self.window.set_title(&format!(
-                                    "{} - Servo",
+                                    "{} - Moto",
                                     title.clone().unwrap_or_default()
                                 ));
                             }
@@ -1046,7 +1046,7 @@ fn prompt_user(prompt: PermissionPrompt) -> PermissionRequest {
         },
         PermissionPrompt::Insecure(permission_name) => {
             format!(
-                "The {:?} feature is only safe to use in secure context, but servo can't guarantee\n\
+                "The {:?} feature is only safe to use in secure context, but Moto can't guarantee\n\
                 that the current context is secure. Do you want to proceed and grant permission?",
                 permission_name
             )

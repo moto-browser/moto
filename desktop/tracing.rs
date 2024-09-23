@@ -3,17 +3,17 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 /// Log an event from winit ([winit::event::Event]) at trace level.
-/// - To disable tracing: RUST_LOG='servoshell<winit@=off'
-/// - To enable tracing: RUST_LOG='servoshell<winit@'
+/// - To disable tracing: RUST_LOG='moto<winit@=off'
+/// - To enable tracing: RUST_LOG='moto<winit@'
 /// - Recommended filters when tracing is enabled:
-///   - servoshell<winit@DeviceEvent=off
-///   - servoshell<winit@MainEventsCleared=off
-///   - servoshell<winit@NewEvents(WaitCancelled)=off
-///   - servoshell<winit@RedrawEventsCleared=off
-///   - servoshell<winit@RedrawRequested=off
-///   - servoshell<winit@UserEvent(WakerEvent)=off
-///   - servoshell<winit@WindowEvent(AxisMotion)=off
-///   - servoshell<winit@WindowEvent(CursorMoved)=off
+///   - moto<winit@DeviceEvent=off
+///   - moto<winit@MainEventsCleared=off
+///   - moto<winit@NewEvents(WaitCancelled)=off
+///   - moto<winit@RedrawEventsCleared=off
+///   - moto<winit@RedrawRequested=off
+///   - moto<winit@UserEvent(WakerEvent)=off
+///   - moto<winit@WindowEvent(AxisMotion)=off
+///   - moto<winit@WindowEvent(CursorMoved)=off
 macro_rules! trace_winit_event {
     // This macro only exists to put the docs in the same file as the target prefix,
     // so the macro definition is always the same.
@@ -23,11 +23,11 @@ macro_rules! trace_winit_event {
 }
 
 /// Log an event from servo ([servo::embedder_traits::EmbedderMsg]) at trace level.
-/// - To disable tracing: RUST_LOG='servoshell<servo@=off'
-/// - To enable tracing: RUST_LOG='servoshell<servo@'
+/// - To disable tracing: RUST_LOG='moto<servo@=off'
+/// - To enable tracing: RUST_LOG='moto<servo@'
 /// - Recommended filters when tracing is enabled:
-///   - servoshell<servo@EventDelivered=off
-///   - servoshell<servo@ReadyToPresent=off
+///   - moto<servo@EventDelivered=off
+///   - moto<servo@ReadyToPresent=off
 macro_rules! trace_embedder_msg {
     // This macro only exists to put the docs in the same file as the target prefix,
     // so the macro definition is always the same.
@@ -37,11 +37,11 @@ macro_rules! trace_embedder_msg {
 }
 
 /// Log an event to servo ([servo::compositing::windowing::EmbedderEvent]) at trace level.
-/// - To disable tracing: RUST_LOG='servoshell>servo@=off'
-/// - To enable tracing: RUST_LOG='servoshell>servo@'
+/// - To disable tracing: RUST_LOG='moto>servo@=off'
+/// - To enable tracing: RUST_LOG='moto>servo@'
 /// - Recommended filters when tracing is enabled:
-///   - servoshell>servo@Idle=off
-///   - servoshell>servo@MouseWindowMoveEventClass=off
+///   - moto>servo@Idle=off
+///   - moto>servo@MouseWindowMoveEventClass=off
 macro_rules! trace_embedder_event {
     // This macro only exists to put the docs in the same file as the target prefix,
     // so the macro definition is always the same.
@@ -63,7 +63,7 @@ mod from_winit {
 
     macro_rules! target {
         ($($name:literal)+) => {
-            concat!("servoshell<winit@", $($name),+)
+            concat!("moto<winit@", $($name),+)
         };
     }
 
@@ -134,7 +134,7 @@ mod from_servo {
 
     macro_rules! target {
         ($($name:literal)+) => {
-            concat!("servoshell<servo@", $($name),+)
+            concat!("moto<servo@", $($name),+)
         };
     }
 
@@ -188,7 +188,7 @@ mod to_servo {
 
     macro_rules! target {
         ($($name:literal)+) => {
-            concat!("servoshell>servo@", $($name),+)
+            concat!("moto>servo@", $($name),+)
         };
     }
 

@@ -90,7 +90,7 @@ impl Window {
         let height = win_size.to_untyped().height;
 
         let window_builder = winit::window::WindowBuilder::new()
-            .with_title("Servo".to_string())
+            .with_title("Moto".to_string())
             .with_decorations(!no_native_titlebar)
             .with_transparent(no_native_titlebar)
             .with_inner_size(PhysicalSize::new(width as f64, height as f64))
@@ -102,7 +102,7 @@ impl Window {
 
         #[cfg(any(target_os = "linux", target_os = "windows"))]
         {
-            let icon_bytes = include_bytes!("../resources/servo_64.png");
+            let icon_bytes = include_bytes!("../resources/moto_64.png");
             winit_window.set_window_icon(Some(load_icon(icon_bytes)));
         }
 
@@ -508,7 +508,7 @@ impl WindowPortsMethods for Window {
         let size = self.winit_window.outer_size();
 
         let window_builder = winit::window::WindowBuilder::new()
-            .with_title("Servo XR".to_string())
+            .with_title("Moto XR".to_string())
             .with_inner_size(size)
             .with_visible(true);
 
