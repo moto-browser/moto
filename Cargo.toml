@@ -88,7 +88,7 @@ ohos-sys = { version = "0.2.1", features = ["xcomponent"] }
 
 [target.'cfg(not(any(target_os = "android", target_env = "ohos")))'.dependencies]
 # For optional feature servo_allocator/use-system-allocator
-servo_allocator = { path = "../servo/components/allocator" }
+servo_allocator = { git = "https://github.com/servo/servo.git", rev = "f986160" }
 arboard = { version = "3" }
 egui = { version = "0.28.1" }
 egui_glow = { version = "0.28.1", features = ["winit"] }

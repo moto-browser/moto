@@ -1883,7 +1883,7 @@ dependencies = [
  "parking_lot",
  "range",
  "serde",
- "servo_allocator 0.0.1 (git+https://github.com/servo/servo.git?rev=f986160)",
+ "servo_allocator",
  "servo_arc",
  "servo_atoms",
  "servo_config",
@@ -3748,7 +3748,7 @@ dependencies = [
  "script",
  "script_layout_interface",
  "script_traits",
- "servo_allocator 0.0.1 (git+https://github.com/servo/servo.git?rev=f986160)",
+ "servo_allocator",
  "servo_arc",
  "servo_atoms",
  "servo_config",
@@ -4283,7 +4283,7 @@ dependencies = [
  "rusqlite",
  "serde_json",
  "servo-media",
- "servo_allocator 0.0.1",
+ "servo_allocator",
  "shellwords",
  "sig",
  "surfman",
@@ -4490,7 +4490,7 @@ dependencies = [
  "rustls-pemfile",
  "serde",
  "serde_json",
- "servo_allocator 0.0.1 (git+https://github.com/servo/servo.git?rev=f986160)",
+ "servo_allocator",
  "servo_arc",
  "servo_config",
  "servo_url",
@@ -5673,7 +5673,7 @@ dependencies = [
  "serde",
  "serde_json",
  "servo-media",
- "servo_allocator 0.0.1 (git+https://github.com/servo/servo.git?rev=f986160)",
+ "servo_allocator",
  "servo_arc",
  "servo_atoms",
  "servo_config",
@@ -6067,16 +6067,6 @@ dependencies = [
  "log",
  "servo-media-streams",
  "uuid",
-]
-
-[[package]]
-name = "servo_allocator"
-version = "0.0.1"
-dependencies = [
- "libc",
- "tikv-jemalloc-sys",
- "tikv-jemallocator",
- "windows-sys 0.59.0",
 ]
 
 [[package]]
