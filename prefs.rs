@@ -11,6 +11,10 @@ use servo::config::opts;
 use servo::config::prefs::{self, PrefValue};
 use servo::servo_config::basedir;
 
+const PREF_OVERRIDES: &'static [(&'static str, PrefValue)] = &[
+    ("layout.legacy_layout", PrefValue::Bool(false)),
+];
+
 pub fn register_user_prefs(opts_matches: &Matches) {
     // Read user's prefs.json and then parse --pref command line args.
 
@@ -37,20 +41,25 @@ pub fn register_user_prefs(opts_matches: &Matches) {
         .map(|pref| {
             let split: Vec<&str> = pref.splitn(2, '=').collect();
             let pref_name = split[0];
-            let pref_value = match split.get(1).cloned() {
-                Some("true") | None => PrefValue::Bool(true),
-                Some("false") => PrefValue::Bool(false),
-                Some(string) => {
-                    if let Ok(int) = string.parse::<i64>() {
-                        PrefValue::Int(int)
-                    } else if let Ok(float) = string.parse::<f64>() {
-                        PrefValue::Float(float)
-                    } else {
-                        PrefValue::from(string)
-                    }
-                },
-            };
-            (pref_name.to_string(), pref_value)
+            let override_value = get_pref_override(pref_name);
+            if let Some(value) = override_value {
+                return (pref_name.to_string(), value);
+            } else {
+                let pref_value = match split.get(1).cloned() {
+                    Some("true") | None => PrefValue::Bool(true),
+                    Some("false") => PrefValue::Bool(false),
+                    Some(string) => {
+                        if let Ok(int) = string.parse::<i64>() {
+                            PrefValue::Int(int)
+                        } else if let Ok(float) = string.parse::<f64>() {
+                            PrefValue::Float(float)
+                        } else {
+                            PrefValue::from(string)
+                        }
+                    },
+                };
+                (pref_name.to_string(), pref_value)
+            }
         })
         .collect();
 
@@ -58,6 +67,10 @@ pub fn register_user_prefs(opts_matches: &Matches) {
     userprefs.extend(argprefs);
 
     prefs::add_user_prefs(userprefs);
+}
+
+fn get_pref_override(key: &str) -> Option<PrefValue> {
+    PREF_OVERRIDES.iter().find(|(k, _)| *k == key).map(|(_, v)| v.clone())
 }
 
 #[cfg(test)]

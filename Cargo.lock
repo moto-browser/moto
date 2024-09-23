@@ -3680,52 +3680,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2db585e1d738fc771bf08a151420d3ed193d9d895a36df7f6f8a9456b911ddc"
 
 [[package]]
-name = "layout_2013"
-version = "0.0.1"
-source = "git+https://github.com/servo/servo.git?rev=f986160#f986160ed405817160e89b178e8e3b372132e792"
-dependencies = [
- "app_units",
- "atomic_refcell",
- "base",
- "bitflags 2.6.0",
- "canvas_traits",
- "embedder_traits",
- "euclid",
- "fnv",
- "fonts",
- "fonts_traits",
- "html5ever",
- "ipc-channel",
- "log",
- "malloc_size_of",
- "malloc_size_of_derive",
- "net_traits",
- "parking_lot",
- "pixels",
- "profile_traits",
- "range",
- "rayon",
- "script_layout_interface",
- "script_traits",
- "serde",
- "serde_json",
- "servo_arc",
- "servo_atoms",
- "servo_config",
- "servo_geometry",
- "servo_url",
- "size_of_test",
- "smallvec",
- "style",
- "style_traits",
- "unicode-bidi",
- "unicode-script",
- "webrender_api",
- "webrender_traits",
- "xi-unicode",
-]
-
-[[package]]
 name = "layout_2020"
 version = "0.0.1"
 source = "git+https://github.com/servo/servo.git?rev=f986160#f986160ed405817160e89b178e8e3b372132e792"
@@ -3768,46 +3722,6 @@ dependencies = [
  "webrender_api",
  "webrender_traits",
  "xi-unicode",
-]
-
-[[package]]
-name = "layout_thread_2013"
-version = "0.0.1"
-source = "git+https://github.com/servo/servo.git?rev=f986160#f986160ed405817160e89b178e8e3b372132e792"
-dependencies = [
- "app_units",
- "base",
- "crossbeam-channel",
- "embedder_traits",
- "euclid",
- "fnv",
- "fonts",
- "fonts_traits",
- "fxhash",
- "ipc-channel",
- "layout_2013",
- "log",
- "malloc_size_of",
- "metrics",
- "net_traits",
- "parking_lot",
- "profile_traits",
- "rayon",
- "script",
- "script_layout_interface",
- "script_traits",
- "serde_json",
- "servo_allocator 0.0.1 (git+https://github.com/servo/servo.git?rev=f986160)",
- "servo_arc",
- "servo_atoms",
- "servo_config",
- "servo_url",
- "style",
- "style_traits",
- "time 0.3.36",
- "url",
- "webrender_api",
- "webrender_traits",
 ]
 
 [[package]]
@@ -3985,7 +3899,6 @@ dependencies = [
  "gstreamer",
  "ipc-channel",
  "keyboard-types",
- "layout_thread_2013",
  "layout_thread_2020",
  "log",
  "media",
