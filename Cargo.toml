@@ -2,6 +2,10 @@
 name = "moto"
 version = "0.1.0"
 edition = "2021"
+authors = ["Daniel Adams <msub2official@gmail.com>"]
+description = "An experimental web browser based on Servo."
+repository = "https://github.com/moto-browser/moto"
+metadata.wix.eula = false
 
 [lib]
 name = "moto"
