@@ -348,7 +348,8 @@ impl Minibrowser {
                         ui.menu_button("Bookmarks", |ui| {
                             let bookmarks = self.bookmarks.borrow();
                             for bookmark in bookmarks.as_slice() {
-                                if ui.button(&bookmark.title).clicked() {
+                                let button = egui::Button::new(bookmark.title.as_str()).min_size((256.0, 20.0).into());
+                                if ui.add(button).clicked() {
                                     *location.borrow_mut() = bookmark.url.clone();
                                     event_queue.borrow_mut().push(MinibrowserEvent::Go);
                                     ui.close_menu();
@@ -359,7 +360,8 @@ impl Minibrowser {
                             let history = webviews.history();
                             for url in history {
                                 // TODO: Prevent Servo from receiving cursor events while hovering these
-                                if ui.button(url.as_str()).clicked() {
+                                let button = egui::Button::new(url.as_str()).min_size((256.0, 20.0).into());
+                                if ui.add(button).clicked() {
                                     *location.borrow_mut() = url.to_string();
                                     event_queue.borrow_mut().push(MinibrowserEvent::Go);
                                     ui.close_menu();
