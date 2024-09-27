@@ -1,6 +1,6 @@
 [package]
 name = "moto"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["Daniel Adams <msub2official@gmail.com>"]
 description = "An experimental web browser based on Servo."

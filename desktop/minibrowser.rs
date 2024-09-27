@@ -3,6 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 use std::cell::{Cell, RefCell};
+use std::collections::HashMap;
 use std::fs;
 use std::num::NonZeroU32;
 use std::path::Path;
@@ -13,8 +14,7 @@ use directories::ProjectDirs;
 use egui::text::{CCursor, CCursorRange};
 use egui::text_edit::TextEditState;
 use egui::{
-    menu, pos2, CentralPanel, Frame, Key, Label, Modifiers, PaintCallback, Pos2, SelectableLabel,
-    TopBottomPanel, Vec2,
+    menu, pos2, CentralPanel, Color32, Frame, Key, Label, Modifiers, PaintCallback, Pos2, RichText, SelectableLabel, TopBottomPanel, Vec2
 };
 use egui_glow::CallbackFn;
 use egui_winit::EventResponse;
@@ -24,6 +24,7 @@ use glow::NativeFramebuffer;
 use log::{trace, warn};
 use servo::base::id::WebViewId;
 use servo::compositing::windowing::EmbedderEvent;
+use servo::config::prefs::PrefValue;
 use servo::script_traits::TraversalDirection;
 use servo::servo_geometry::DeviceIndependentPixel;
 use servo::servo_url::ServoUrl;
@@ -323,6 +324,9 @@ impl Minibrowser {
         let _duration = context.run(window, |ctx| {
             // TODO: While in fullscreen add some way to mitigate the increased phishing risk
             // when not displaying the URL bar: https://github.com/servo/servo/issues/32443
+            let is_config = webviews.current_url_string().map_or(false, |url| {
+                url == "moto:config"
+            });
             if window.fullscreen().is_none() {
                 let frame = egui::Frame::default()
                     .fill(ctx.style().visuals.window_fill)
@@ -537,81 +541,146 @@ impl Minibrowser {
                 return;
             };
 
-            CentralPanel::default()
-                .frame(Frame::none())
-                .show(ctx, |ui| {
-                    let Pos2 { x, y } = ui.cursor().min;
-                    let Vec2 {
-                        x: width,
-                        y: height,
-                    } = ui.available_size();
-                    let rect =
-                        Box2D::from_origin_and_size(Point2D::new(x, y), Size2D::new(width, height))
-                            * scale;
-                    if rect != webview.rect {
-                        webview.rect = rect;
-                        embedder_events
-                            .push(EmbedderEvent::MoveResizeWebView(focused_webview_id, rect));
-                    }
-                    let min = ui.cursor().min;
-                    let size = ui.available_size();
-                    let rect = egui::Rect::from_min_size(min, size);
-                    ui.allocate_space(size);
-
-                    let Some(servo_fbo) = servo_framebuffer_id else {
-                        return;
-                    };
-
-                    if let Some(status_text) = &self.status_text {
-                        egui::containers::popup::show_tooltip_at(
-                            ctx,
-                            ui.layer_id(),
-                            "tooltip layer".into(),
-                            pos2(0.0, ctx.available_rect().max.y),
-                            |ui| ui.add(Label::new(status_text.clone()).extend()),
-                        );
-                    }
-
-                    ui.painter().add(PaintCallback {
-                        rect,
-                        callback: Arc::new(CallbackFn::new(move |info, painter| {
-                            use glow::HasContext as _;
-                            let clip = info.viewport_in_pixels();
-                            let x = clip.left_px as gl::GLint;
-                            let y = clip.from_bottom_px as gl::GLint;
-                            let width = clip.width_px as gl::GLsizei;
-                            let height = clip.height_px as gl::GLsizei;
-                            unsafe {
-                                painter.gl().clear_color(0.0, 0.0, 0.0, 0.0);
-                                painter.gl().scissor(x, y, width, height);
-                                painter.gl().enable(gl::SCISSOR_TEST);
-                                painter.gl().clear(gl::COLOR_BUFFER_BIT);
-                                painter.gl().disable(gl::SCISSOR_TEST);
-
-                                let servo_fbo = NonZeroU32::new(servo_fbo).map(NativeFramebuffer);
-                                painter
-                                    .gl()
-                                    .bind_framebuffer(gl::READ_FRAMEBUFFER, servo_fbo);
-                                painter
-                                    .gl()
-                                    .bind_framebuffer(gl::DRAW_FRAMEBUFFER, widget_fbo);
-                                painter.gl().blit_framebuffer(
-                                    x,
-                                    y,
-                                    x + width,
-                                    y + height,
-                                    x,
-                                    y,
-                                    x + width,
-                                    y + height,
-                                    gl::COLOR_BUFFER_BIT,
-                                    gl::NEAREST,
-                                );
-                                painter.gl().bind_framebuffer(gl::FRAMEBUFFER, widget_fbo);
+            if is_config {
+                // Paint the config page
+                CentralPanel::default()
+                    .frame(Frame::none().fill(Color32::WHITE))
+                    .show(ctx, |ui| {
+                        let prefs = servo::config::prefs::pref_map();
+                        let mut sorted_prefs = prefs.iter().collect::<Vec<_>>();
+                        sorted_prefs.sort_by_key(|k| k.0.clone());
+                        let mut prefs_to_set = HashMap::new();
+                        egui::containers::ScrollArea::vertical().show(ui, |ui| {
+                            for (k, v) in sorted_prefs {
+                                ui.columns(2, |cols| {
+                                    cols[0].vertical(|ui| {
+                                        ui.label(RichText::new(k.clone()).color(Color32::BLACK).size(16.0));
+                                    });
+                                    cols[1].vertical(|ui| {
+                                        match v {
+                                            PrefValue::Float(f) => {
+                                                let mut num_text = f.to_string();
+                                                if ui.text_edit_singleline(&mut num_text).changed() {
+                                                    let value = num_text.parse();
+                                                    if let Ok(v) = value {
+                                                        prefs_to_set.insert(k.to_owned(), PrefValue::Float(v));
+                                                    }
+                                                }
+                                            },
+                                            PrefValue::Int(i) => {
+                                                let mut num_text = i.to_string();
+                                                if ui.text_edit_singleline(&mut num_text).changed() {
+                                                    let value = num_text.parse();
+                                                    if let Ok(v) = value {
+                                                        prefs_to_set.insert(k.to_owned(), PrefValue::Int(v));
+                                                    }
+                                                }
+                                            },
+                                            PrefValue::Str(mut s) => {
+                                                if ui.text_edit_singleline(&mut s).changed() {
+                                                    prefs_to_set.insert(k.to_owned(), PrefValue::Str(s));
+                                                }
+                                            },
+                                            PrefValue::Bool(mut b) => {
+                                                if ui.checkbox(&mut b, "").clicked() {
+                                                    prefs_to_set.insert(k.to_owned(), PrefValue::Bool(b));
+                                                }
+                                            },
+                                            PrefValue::Array(_) => {
+                                                // TODO: Support this
+                                                // There's only a single pref that takes this right now,
+                                                // shell.background-color.rgba
+                                            },
+                                            PrefValue::Missing => {},
+                                        }
+                                    });
+                                });
+                            };
+                        });
+                        prefs_to_set.iter().for_each(|(k, v)| {
+                            if let Err(e) = prefs.set(k, v.clone()) {
+                                warn!("Failed to set pref: {}", e);
                             }
-                        })),
+                        });
                     });
-                });
+            } else {
+                // Paint Servo
+                CentralPanel::default()
+                    .frame(Frame::none())
+                    .show(ctx, |ui| {
+                        let Pos2 { x, y } = ui.cursor().min;
+                        let Vec2 {
+                            x: width,
+                            y: height,
+                        } = ui.available_size();
+                        let rect =
+                            Box2D::from_origin_and_size(Point2D::new(x, y), Size2D::new(width, height))
+                                * scale;
+                        if rect != webview.rect {
+                            webview.rect = rect;
+                            embedder_events
+                                .push(EmbedderEvent::MoveResizeWebView(focused_webview_id, rect));
+                        }
+                        let min = ui.cursor().min;
+                        let size = ui.available_size();
+                        let rect = egui::Rect::from_min_size(min, size);
+                        ui.allocate_space(size);
+
+                        let Some(servo_fbo) = servo_framebuffer_id else {
+                            return;
+                        };
+    
+                        if let Some(status_text) = &self.status_text {
+                            egui::containers::popup::show_tooltip_at(
+                                ctx,
+                                ui.layer_id(),
+                                "tooltip layer".into(),
+                                pos2(0.0, ctx.available_rect().max.y),
+                                |ui| ui.add(Label::new(status_text.clone()).extend()),
+                            );
+                        }
+    
+                        ui.painter().add(PaintCallback {
+                            rect,
+                            callback: Arc::new(CallbackFn::new(move |info, painter| {
+                                use glow::HasContext as _;
+                                let clip = info.viewport_in_pixels();
+                                let x = clip.left_px as gl::GLint;
+                                let y = clip.from_bottom_px as gl::GLint;
+                                let width = clip.width_px as gl::GLsizei;
+                                let height = clip.height_px as gl::GLsizei;
+                                unsafe {
+                                    painter.gl().clear_color(0.0, 0.0, 0.0, 0.0);
+                                    painter.gl().scissor(x, y, width, height);
+                                    painter.gl().enable(gl::SCISSOR_TEST);
+                                    painter.gl().clear(gl::COLOR_BUFFER_BIT);
+                                    painter.gl().disable(gl::SCISSOR_TEST);
+    
+                                    let servo_fbo = NonZeroU32::new(servo_fbo).map(NativeFramebuffer);
+                                    painter
+                                        .gl()
+                                        .bind_framebuffer(gl::READ_FRAMEBUFFER, servo_fbo);
+                                    painter
+                                        .gl()
+                                        .bind_framebuffer(gl::DRAW_FRAMEBUFFER, widget_fbo);
+                                    painter.gl().blit_framebuffer(
+                                        x,
+                                        y,
+                                        x + width,
+                                        y + height,
+                                        x,
+                                        y,
+                                        x + width,
+                                        y + height,
+                                        gl::COLOR_BUFFER_BIT,
+                                        gl::NEAREST,
+                                    );
+                                    painter.gl().bind_framebuffer(gl::FRAMEBUFFER, widget_fbo);
+                                }
+                            })),
+                        });
+                    });
+            }
 
             if !embedder_events.is_empty() {
                 webviews.handle_window_events(embedder_events);

@@ -35,6 +35,12 @@ impl ProtocolHandler for MotoProtocolHander {
                 context,
                 "/newtab.html",
             ),
+            "config" => ResourceProtocolHander::response_for_path(
+                request,
+                done_chan,
+                context,
+                "/newtab.html",
+            ),
             _ => Box::pin(std::future::ready(Response::network_internal_error(
                 "Invalid shortcut",
             ))),
