@@ -60,9 +60,9 @@ impl EmbedderMethods for EmbedderCallbacks {
 
     fn get_protocol_handlers(&self) -> ProtocolRegistry {
         let mut registry = ProtocolRegistry::default();
-        registry.register("urlinfo", urlinfo::UrlInfoProtocolHander::default());
-        registry.register("moto", moto::MotoProtocolHander::default());
-        registry.register("resource", resource::ResourceProtocolHander::default());
+        registry.register("urlinfo", urlinfo::UrlInfoProtocolHandler::default());
+        registry.register("moto", moto::MotoProtocolHandler::default());
+        registry.register("resource", resource::ResourceProtocolHandler::default());
         registry
     }
 

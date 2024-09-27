@@ -14,12 +14,12 @@ use servo::net::protocols::ProtocolHandler;
 use servo::net_traits::request::Request;
 use servo::net_traits::response::Response;
 
-use crate::desktop::protocols::resource::ResourceProtocolHander;
+use crate::desktop::protocols::resource::ResourceProtocolHandler;
 
 #[derive(Default)]
-pub struct MotoProtocolHander {}
+pub struct MotoProtocolHandler {}
 
-impl ProtocolHandler for MotoProtocolHander {
+impl ProtocolHandler for MotoProtocolHandler {
     fn load(
         &self,
         request: &mut Request,
@@ -29,13 +29,13 @@ impl ProtocolHandler for MotoProtocolHander {
         let url = request.current_url();
 
         match url.path() {
-            "newtab" => ResourceProtocolHander::response_for_path(
+            "newtab" => ResourceProtocolHandler::response_for_path(
                 request,
                 done_chan,
                 context,
                 "/newtab.html",
             ),
-            "config" => ResourceProtocolHander::response_for_path(
+            "config" => ResourceProtocolHandler::response_for_path(
                 request,
                 done_chan,
                 context,

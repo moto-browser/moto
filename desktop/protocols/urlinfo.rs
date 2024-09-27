@@ -14,10 +14,10 @@ use servo::net_traits::response::{Response, ResponseBody};
 use servo::net_traits::ResourceFetchTiming;
 
 #[derive(Default)]
-pub struct UrlInfoProtocolHander {}
+pub struct UrlInfoProtocolHandler {}
 
 // A simple protocol handler that displays information about the url itself.
-impl ProtocolHandler for UrlInfoProtocolHander {
+impl ProtocolHandler for UrlInfoProtocolHandler {
     fn load(
         &self,
         request: &mut Request,
