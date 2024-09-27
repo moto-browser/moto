@@ -1,6 +1,6 @@
 # Moto
 
-Moto is an experimental browser based on the Servo browser engine.
+Moto is an experimental browser based on the [Servo browser engine](https://github.com/servo/servo).
 
 ## Setting Expectations
 
