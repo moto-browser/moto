@@ -11,9 +11,8 @@ use servo::config::opts;
 use servo::config::prefs::{self, PrefValue};
 use servo::servo_config::basedir;
 
-const PREF_OVERRIDES: &'static [(&'static str, PrefValue)] = &[
-    ("layout.legacy_layout", PrefValue::Bool(false)),
-];
+const PREF_OVERRIDES: &'static [(&'static str, PrefValue)] =
+    &[("layout.legacy_layout", PrefValue::Bool(false))];
 
 pub fn register_user_prefs(opts_matches: &Matches) {
     // Read user's prefs.json and then parse --pref command line args.
@@ -70,7 +69,10 @@ pub fn register_user_prefs(opts_matches: &Matches) {
 }
 
 fn get_pref_override(key: &str) -> Option<PrefValue> {
-    PREF_OVERRIDES.iter().find(|(k, _)| *k == key).map(|(_, v)| v.clone())
+    PREF_OVERRIDES
+        .iter()
+        .find(|(k, _)| *k == key)
+        .map(|(_, v)| v.clone())
 }
 
 #[cfg(test)]

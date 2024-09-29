@@ -352,7 +352,8 @@ impl Minibrowser {
                         ui.menu_button("Bookmarks", |ui| {
                             let bookmarks = self.bookmarks.borrow();
                             for bookmark in bookmarks.as_slice() {
-                                let button = egui::Button::new(bookmark.title.as_str()).min_size((256.0, 20.0).into());
+                                let button = egui::Button::new(bookmark.title.as_str())
+                                    .min_size((256.0, 20.0).into());
                                 if ui.add(button).clicked() {
                                     *location.borrow_mut() = bookmark.url.clone();
                                     event_queue.borrow_mut().push(MinibrowserEvent::Go);
@@ -364,7 +365,8 @@ impl Minibrowser {
                             let history = webviews.history();
                             for url in history {
                                 // TODO: Prevent Servo from receiving cursor events while hovering these
-                                let button = egui::Button::new(url.as_str()).min_size((256.0, 20.0).into());
+                                let button =
+                                    egui::Button::new(url.as_str()).min_size((256.0, 20.0).into());
                                 if ui.add(button).clicked() {
                                     *location.borrow_mut() = url.to_string();
                                     event_queue.borrow_mut().push(MinibrowserEvent::Go);
@@ -485,9 +487,9 @@ impl Minibrowser {
                         .title_bar(true)
                         .show(ctx, |ui| {
                             ui.vertical_centered(|ui| {
-                                ui.add(
-                                    egui::Image::new(egui::include_image!("../resources/moto_1024.png"))
-                                );
+                                ui.add(egui::Image::new(egui::include_image!(
+                                    "../resources/moto_1024.png"
+                                )));
                                 let text = egui::RichText::new(crate::moto_version()).size(16.0);
                                 ui.label(text);
                                 ui.add_space(8.0);
@@ -554,36 +556,50 @@ impl Minibrowser {
                             for (k, v) in sorted_prefs {
                                 ui.columns(2, |cols| {
                                     cols[0].vertical(|ui| {
-                                        ui.label(RichText::new(k.clone()).color(Color32::BLACK).size(16.0));
+                                        ui.label(
+                                            RichText::new(k.clone())
+                                                .color(Color32::BLACK)
+                                                .size(16.0),
+                                        );
                                     });
                                     cols[1].vertical(|ui| {
                                         match v {
                                             PrefValue::Float(f) => {
                                                 let mut num_text = f.to_string();
-                                                if ui.text_edit_singleline(&mut num_text).changed() {
+                                                if ui.text_edit_singleline(&mut num_text).changed()
+                                                {
                                                     let value = num_text.parse();
                                                     if let Ok(v) = value {
-                                                        prefs_to_set.insert(k.to_owned(), PrefValue::Float(v));
+                                                        prefs_to_set.insert(
+                                                            k.to_owned(),
+                                                            PrefValue::Float(v),
+                                                        );
                                                     }
                                                 }
                                             },
                                             PrefValue::Int(i) => {
                                                 let mut num_text = i.to_string();
-                                                if ui.text_edit_singleline(&mut num_text).changed() {
+                                                if ui.text_edit_singleline(&mut num_text).changed()
+                                                {
                                                     let value = num_text.parse();
                                                     if let Ok(v) = value {
-                                                        prefs_to_set.insert(k.to_owned(), PrefValue::Int(v));
+                                                        prefs_to_set.insert(
+                                                            k.to_owned(),
+                                                            PrefValue::Int(v),
+                                                        );
                                                     }
                                                 }
                                             },
                                             PrefValue::Str(mut s) => {
                                                 if ui.text_edit_singleline(&mut s).changed() {
-                                                    prefs_to_set.insert(k.to_owned(), PrefValue::Str(s));
+                                                    prefs_to_set
+                                                        .insert(k.to_owned(), PrefValue::Str(s));
                                                 }
                                             },
                                             PrefValue::Bool(mut b) => {
                                                 if ui.checkbox(&mut b, "").clicked() {
-                                                    prefs_to_set.insert(k.to_owned(), PrefValue::Bool(b));
+                                                    prefs_to_set
+                                                        .insert(k.to_owned(), PrefValue::Bool(b));
                                                 }
                                             },
                                             PrefValue::Array(_) => {
@@ -595,7 +611,7 @@ impl Minibrowser {
                                         }
                                     });
                                 });
-                            };
+                            }
                         });
                         prefs_to_set.iter().for_each(|(k, v)| {
                             if let Err(e) = prefs.set(k, v.clone()) {
@@ -613,9 +629,10 @@ impl Minibrowser {
                             x: width,
                             y: height,
                         } = ui.available_size();
-                        let rect =
-                            Box2D::from_origin_and_size(Point2D::new(x, y), Size2D::new(width, height))
-                                * scale;
+                        let rect = Box2D::from_origin_and_size(
+                            Point2D::new(x, y),
+                            Size2D::new(width, height),
+                        ) * scale;
                         if rect != webview.rect {
                             webview.rect = rect;
                             embedder_events
@@ -629,7 +646,7 @@ impl Minibrowser {
                         let Some(servo_fbo) = servo_framebuffer_id else {
                             return;
                         };
-    
+
                         if let Some(status_text) = &self.status_text {
                             egui::containers::popup::show_tooltip_at(
                                 ctx,
@@ -639,7 +656,7 @@ impl Minibrowser {
                                 |ui| ui.add(Label::new(status_text.clone()).extend()),
                             );
                         }
-    
+
                         ui.painter().add(PaintCallback {
                             rect,
                             callback: Arc::new(CallbackFn::new(move |info, painter| {
@@ -655,8 +672,9 @@ impl Minibrowser {
                                     painter.gl().enable(gl::SCISSOR_TEST);
                                     painter.gl().clear(gl::COLOR_BUFFER_BIT);
                                     painter.gl().disable(gl::SCISSOR_TEST);
-    
-                                    let servo_fbo = NonZeroU32::new(servo_fbo).map(NativeFramebuffer);
+
+                                    let servo_fbo =
+                                        NonZeroU32::new(servo_fbo).map(NativeFramebuffer);
                                     painter
                                         .gl()
                                         .bind_framebuffer(gl::READ_FRAMEBUFFER, servo_fbo);
