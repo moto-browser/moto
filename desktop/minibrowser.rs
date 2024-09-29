@@ -4,17 +4,23 @@
 
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
-use std::fs;
+use std::fs::{self, OpenOptions};
+use std::io::Write;
 use std::num::NonZeroU32;
 use std::path::Path;
+use std::process::Command;
+use std::rc::Rc;
 use std::sync::Arc;
+use std::thread::{self, JoinHandle};
 use std::time::Instant;
 
-use directories::ProjectDirs;
+use curl::easy::Easy;
+use directories::{ProjectDirs, UserDirs};
 use egui::text::{CCursor, CCursorRange};
 use egui::text_edit::TextEditState;
 use egui::{
-    menu, pos2, CentralPanel, Color32, Frame, Key, Label, Modifiers, PaintCallback, Pos2, RichText, SelectableLabel, TopBottomPanel, Vec2
+    menu, pos2, CentralPanel, Color32, Frame, Key, Label, Modifiers, PaintCallback, Pos2, RichText,
+    SelectableLabel, TopBottomPanel, Vec2,
 };
 use egui_glow::CallbackFn;
 use egui_winit::EventResponse;
@@ -65,8 +71,10 @@ pub struct Minibrowser {
     show_about_window: Cell<bool>,
 
     config_dir: String,
+    download_dir: String,
 
     bookmarks: RefCell<Vec<Bookmark>>,
+    download_jobs: RefCell<Vec<DownloadJob>>,
 }
 
 pub enum MinibrowserEvent {
@@ -90,6 +98,13 @@ fn truncate_with_ellipsis(input: &str, max_length: usize) -> String {
 pub struct Bookmark {
     pub url: String,
     pub title: String,
+}
+
+pub struct DownloadJob {
+    pub source_url: String,
+    pub filename: String,
+    pub downloaded_file_path: String,
+    pub handle: RefCell<Option<JoinHandle<()>>>,
 }
 
 impl Minibrowser {
@@ -119,6 +134,13 @@ impl Minibrowser {
         } else {
             // TODO: Handle this case somehow
             String::from("")
+        };
+
+        let download_dir = if let Some(dir) = UserDirs::new().unwrap().download_dir() {
+            String::from(dir.to_str().unwrap_or(""))
+        } else {
+            // Assume Unix without XDG download directory set
+            String::from("~/Downloads")
         };
 
         if !config_dir.is_empty() {
@@ -151,7 +173,9 @@ impl Minibrowser {
             status_text: None,
             show_about_window: false.into(),
             config_dir,
+            download_dir,
             bookmarks: RefCell::new(bookmarks),
+            download_jobs: RefCell::new(vec![]),
         }
     }
 
@@ -324,9 +348,16 @@ impl Minibrowser {
         let _duration = context.run(window, |ctx| {
             // TODO: While in fullscreen add some way to mitigate the increased phishing risk
             // when not displaying the URL bar: https://github.com/servo/servo/issues/32443
-            let is_config = webviews.current_url_string().map_or(false, |url| {
-                url == "moto:config"
-            });
+            let current_url = webviews.current_url_string().unwrap_or("".to_owned());
+            let is_config = current_url == "moto:config";
+            // Check if the URL is a file URL by seeing if it contains a file extension
+            if current_url.split('/').last().unwrap_or("").contains('.') {
+                event_queue.borrow_mut().push(MinibrowserEvent::Back);
+
+                let download_dir = self.download_dir.clone();
+                let job = Minibrowser::download_file(current_url.clone(), download_dir);
+                self.download_jobs.borrow_mut().push(job);
+            }
             if window.fullscreen().is_none() {
                 let frame = egui::Frame::default()
                     .fill(ctx.style().visuals.window_fill)
@@ -410,6 +441,51 @@ impl Minibrowser {
                                 ui.available_size(),
                                 egui::Layout::right_to_left(egui::Align::Center),
                                 |ui| {
+                                    let num_jobs = self
+                                        .download_jobs
+                                        .borrow()
+                                        .iter()
+                                        .filter(|job| {
+                                            let handle = job.handle.borrow();
+                                            handle.as_ref().is_some_and(|job| job.is_finished())
+                                        })
+                                        .count();
+                                    let download_text = if num_jobs > 0 {
+                                        format!("Downloads ({})", num_jobs)
+                                    } else {
+                                        "Downloads".to_string()
+                                    };
+                                    ui.menu_button(download_text, |ui| {
+                                        for mut job in self.download_jobs.borrow_mut().iter().rev()
+                                        {
+                                            // TODO: Prevent Servo from receiving cursor events while hovering these
+                                            let has_job = job.handle.borrow().is_some();
+                                            let has_finished_job = job
+                                                .handle
+                                                .borrow()
+                                                .as_ref()
+                                                .is_some_and(|job| job.is_finished());
+                                            let text = if has_finished_job {
+                                                let handle =
+                                                    job.handle.borrow_mut().take().unwrap();
+                                                handle.join().unwrap();
+                                                "Completed"
+                                            } else if has_job {
+                                                "Downloading..."
+                                            } else {
+                                                "Completed"
+                                            };
+                                            let button = egui::Button::new(format!(
+                                                "{}\n{}",
+                                                &job.filename, text
+                                            ))
+                                            .min_size((256.0, 20.0).into());
+                                            if ui.add(button).clicked() {
+                                                Minibrowser::open_file(&job.downloaded_file_path);
+                                                ui.close_menu();
+                                            }
+                                        }
+                                    });
                                     let has_bookmark = self
                                         .bookmarks
                                         .borrow()
@@ -817,5 +893,65 @@ impl Minibrowser {
         self.update_location_in_toolbar(browser)
             | self.update_spinner_in_toolbar(browser)
             | self.update_status_text(browser)
+    }
+
+    pub fn download_file(source_url: String, download_dir: String) -> DownloadJob {
+        let filename = source_url.split('/').last().unwrap().to_owned();
+        let downloaded_file_path = format!("{}/{}", &download_dir, &filename);
+
+        let url = source_url.clone();
+        let path = downloaded_file_path.clone();
+
+        let handle = thread::spawn(move || {
+            let mut easy = Easy::new();
+            easy.follow_location(true).unwrap();
+            easy.url(&url).unwrap();
+
+            let mut file = OpenOptions::new()
+                .append(true)
+                .create(true)
+                .open(path)
+                .unwrap();
+
+            easy.write_function(move |data| {
+                file.write_all(data).unwrap();
+                Ok(data.len())
+            })
+            .unwrap();
+
+            easy.perform().unwrap();
+        });
+        DownloadJob {
+            source_url: source_url.clone(),
+            downloaded_file_path: downloaded_file_path.clone(),
+            filename,
+            handle: RefCell::new(Some(handle)),
+        }
+    }
+
+    pub fn open_file(file_path: &str) {
+        #[cfg(target_os = "windows")]
+        {
+            Command::new("cmd")
+                .args(&["/C", "start", file_path])
+                .spawn()
+                .expect("Failed to open file on Windows");
+        }
+
+        #[cfg(target_os = "macos")]
+        {
+            Command::new("open")
+                .arg(file_path)
+                .spawn()
+                .expect("Failed to open file on macOS");
+        }
+
+        #[cfg(target_os = "linux")]
+        {
+            Command::new("xdg-open")
+                .arg(file_path)
+                .spawn()
+                .expect("Failed to open file on Linux");
+        }
     }
 }
