@@ -2,6 +2,8 @@
 
 Moto is an experimental browser based on the [Servo browser engine](https://github.com/servo/servo).
 
+*Note: This project has not been tracking the latest upstream changes to Servoshell for quite some time, and there is currently ongoing work to develop a more fully-fledged embedding API. I will likely wait to update this repo again until I've had the chance to mess around with the new embedding API.*
+
 ## Setting Expectations
 
 - This is currently being worked on by one person, on the side, in their free time.
